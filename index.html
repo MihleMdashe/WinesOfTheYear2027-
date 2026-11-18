@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wines of the Year</title>
+<!-- Preview wrapper only. The reusable component is everything between the START and END markers. -->
+<style>
+  html, body { margin: 0; padding: 0; }
+  body { background: #e9e1cd; }
+</style>
+</head>
+<body>
+<!-- WINES OF THE YEAR COMPONENT: START -->
+<!-- ============================================================
+  WINES OF THE YEAR | tap-to-open bottle shelves
+  Self-contained interactive component for Shorthand.
+
+  DESIGN: light warm brown paper canvas, Platter's maroon
+  accents, serif display titles, echoing the winners brochure.
+  --woty-maroon (#a2102e) is sampled from the brochure's own
+  "WINES OF THE YEAR" banner. Tune everything in DESIGN SETTINGS.
+
+  DATA: the Platter's South African Wine Guide 2027 Wines of the
+  Year list, one winner per category, transcribed from the
+  brochure pages 2-3 on 18 November 2026. Order follows the
+  brochure exactly. Please proofread before publishing.
+
+  PLACEHOLDER BOTTLES: the brochure contains no bottle
+  photography (it is all vector art), so these SVG silhouettes
+  stand in for real bottle shots. Swap in <img> tags per wine
+  once photography is available.
+
+  EMBED: host this file on GitHub Pages and iframe it with the
+  matching embed code, or paste this component raw into a
+  Shorthand Custom HTML section. The auto-height script posts
+  "woty-height" to the parent only when embedded.
+============================================================ -->
+<style>
+  .woty {
+    /* DESIGN SETTINGS */
+    --woty-canvas: #f7f2e4;
+    --woty-card: #fffdf6;
+    --woty-maroon: #a2102e;
+    --woty-maroon-deep: #7c0d23;
+    --woty-brown: #5f4a33;
+    --woty-ink: #2b2119;
+    --woty-muted: #77664e;
+    --woty-hairline: rgba(122, 13, 35, .22);
+    --woty-ledge: rgba(124, 96, 58, .32);
+    --woty-font-display: Georgia, 'Times New Roman', serif;
+    --woty-font-body: 'Proxima Nova', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    --woty-gutter: clamp(16px, 4vw, 36px);
+    --woty-slot: 168px;
+    --woty-glass-h: 208px;
+
+    box-sizing: border-box;
+    font-family: var(--woty-font-body);
+    color: var(--woty-ink);
+    background-color: var(--woty-canvas);
+    background-image:
+      repeating-linear-gradient(0deg, rgba(120, 98, 62, .05) 0 1px, transparent 1px 4px),
+      repeating-linear-gradient(90deg, rgba(120, 98, 62, .035) 0 1px, transparent 1px 5px);
+    box-shadow: inset 0 0 0 1px var(--woty-hairline), inset 0 0 64px rgba(124, 96, 58, .07);
+    padding: 24px 0 0;
+  }
+  .woty *, .woty *::before, .woty *::after { box-sizing: border-box; }
+  .woty h2, .woty h3, .woty h4, .woty p { margin: 0; }
+
+  /* Header */
+  .woty-head { padding: 4px var(--woty-gutter) 18px; }
+  .woty-guide { font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--woty-brown); }
+  .woty-dek { max-width: 620px; margin-top: 12px; font-size: clamp(15px, 2vw, 17px); line-height: 1.5; color: var(--woty-muted); }
+  .woty-taphint { margin-top: 10px; font-size: 13px; font-weight: 600; color: var(--woty-maroon-deep); }
+
+  /* Category chips */
+  .woty-chips { position: sticky; top: 0; z-index: 5; display: flex; gap: 7px; overflow-x: auto; padding: 9px var(--woty-gutter); background: rgba(247, 242, 228, .97); border-block: 1px solid var(--woty-hairline); scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .woty-chips::-webkit-scrollbar { display: none; }
+  .woty-chip { flex: 0 0 auto; padding: 5px 12px; border: 1px solid var(--woty-hairline); border-radius: 999px; background: var(--woty-card); color: var(--woty-ink); font-size: 12.5px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+  .woty-chip b { font-weight: 400; color: var(--woty-muted); }
+  .woty-chip:active { background: #fff; }
+
+  /* Shelves */
+  .woty-shelf { padding-top: 22px; scroll-margin-top: 58px; }
+  .woty-shelf-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; padding: 0 var(--woty-gutter) 10px; }
+  .woty-shelf-title { font-family: var(--woty-font-display); font-weight: 400; font-size: clamp(21px, 2.6vw, 26px); line-height: 1.1; color: var(--woty-brown); }
+  .woty-meta { margin-top: 3px; font-size: 12px; color: var(--woty-muted); }
+  .woty-hint { display: none; font-size: 12px; color: var(--woty-muted); }
+  .woty-controls { display: flex; gap: 6px; }
+  .woty-arrow { width: 34px; height: 34px; border: 1px solid var(--woty-hairline); border-radius: 50%; background: var(--woty-card); color: var(--woty-maroon-deep); font-size: 17px; line-height: 1; cursor: pointer; }
+  .woty-arrow:disabled { opacity: .25; cursor: default; }
+  .woty-track { display: flex; align-items: flex-start; gap: 20px; overflow-x: auto; padding: 0 var(--woty-gutter) 4px; scroll-snap-type: x proximity; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; touch-action: pan-x pan-y; }
+  .woty-track::-webkit-scrollbar { display: none; }
+
+  /* Bottle slots */
+  .woty-slot { flex: 0 0 var(--woty-slot); width: var(--woty-slot); scroll-snap-align: start; }
+  .woty-bottle-btn { display: block; width: 100%; margin: 0; padding: 4px 4px 8px; border: 0; border-radius: 10px; background: transparent; font: inherit; color: inherit; text-align: center; cursor: pointer; transition: background .15s ease; }
+  .woty-bottle-btn:hover { background: rgba(255, 253, 246, .65); }
+  .woty-bottle-btn.sel { background: var(--woty-card); box-shadow: inset 0 0 0 1px var(--woty-hairline); }
+  .woty-bottle-btn:focus-visible { outline: 2px solid var(--woty-maroon); outline-offset: 2px; }
+  .woty-glass { display: block; padding-bottom: 6px; margin-bottom: 9px; border-bottom: 2px solid var(--woty-ledge); }
+  .woty-art { display: block; height: var(--woty-glass-h); width: auto; margin: 0 auto; filter: drop-shadow(0 7px 9px rgba(64, 42, 22, .20)); }
+  .woty-art .lbl { fill: #f7efdf; opacity: .92; }
+  .woty-art .hl { fill: #fff; opacity: .16; }
+  .g-red   .b { fill: #6e2434; } .g-red   .cap { fill: #501826; }
+  .g-white .b { fill: #d3c394; } .g-white .cap { fill: #b09a5f; }
+  .g-spark .b { fill: #dcbd7a; } .g-spark .cap { fill: #a2102e; }
+  .g-sweet .b { fill: #9c5a26; } .g-sweet .cap { fill: #6f3c12; }
+  .woty-photo-img { display: block; height: var(--woty-glass-h); width: auto; max-width: 100%; margin: 0 auto; object-fit: contain; filter: drop-shadow(0 7px 9px rgba(64, 42, 22, .20)); }
+  .woty-dart .woty-photo-img { height: 128px; }
+  .woty-ccat { display: block; font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--woty-maroon); }
+  .woty-cname { display: block; margin-top: 3px; font-family: var(--woty-font-display); font-size: 14px; line-height: 1.25; color: var(--woty-ink); }
+  .woty-cprod { display: block; margin-top: 3px; font-size: 11px; line-height: 1.35; color: var(--woty-muted); }
+
+  /* Detail card */
+  .woty-detail { margin: 12px var(--woty-gutter) 20px; }
+  .woty-detail[hidden] { display: none; }
+  .woty-detail-inner { position: relative; display: flex; align-items: center; gap: 22px; padding: 18px 46px 18px 18px; background: var(--woty-card); border: 1px solid var(--woty-hairline); border-radius: 6px; box-shadow: 0 10px 24px rgba(64, 42, 22, .10); }
+  .woty-detail.open .woty-detail-inner { animation: woty-in .22s ease; }
+  @keyframes woty-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .woty-dart { flex: 0 0 92px; }
+  .woty-dart .woty-art { height: 128px; }
+  .woty-dcat { font-size: 10.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--woty-maroon); }
+  .woty-dname { margin-top: 4px; font-family: var(--woty-font-display); font-weight: 400; font-size: clamp(20px, 3vw, 26px); line-height: 1.15; color: var(--woty-ink); }
+  .woty-dprod { margin-top: 5px; font-size: 15px; color: var(--woty-brown); }
+  .woty-dvint { margin-top: 3px; font-size: 13px; color: var(--woty-muted); }
+  .woty-daward { margin-top: 9px; font-size: 12px; font-style: italic; color: var(--woty-muted); }
+  .woty-close { position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; border: 1px solid var(--woty-hairline); border-radius: 50%; background: transparent; color: var(--woty-maroon-deep); font-size: 15px; line-height: 1; cursor: pointer; }
+  .woty-close:focus-visible { outline: 2px solid var(--woty-maroon); outline-offset: 2px; }
+
+  /* Footer */
+  .woty-foot { margin-top: 10px; padding: 14px var(--woty-gutter) 22px; border-top: 1px solid var(--woty-hairline); }
+  .woty-source { font-size: 12px; color: var(--woty-muted); }
+  .woty-credit { margin-top: 3px; font-size: 12px; color: var(--woty-muted); }
+  .woty-credit strong { color: var(--woty-ink); }
+  .woty-note { margin-top: 8px; font-size: 11px; font-style: italic; color: var(--woty-muted); }
+
+  @media (max-width: 759px) {
+    .woty { --woty-slot: 142px; --woty-glass-h: 182px; }
+    .woty-track { gap: 14px; }
+    .woty-controls { display: none; }
+    .woty-hint { display: block; }
+    .woty-cname { font-size: 13px; }
+    .woty-detail-inner { gap: 16px; padding: 14px 42px 14px 14px; }
+    .woty-dart { flex-basis: 72px; }
+    .woty-dart .woty-art { height: 104px; }
+    .woty-dart .woty-photo-img { height: 104px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .woty-detail.open .woty-detail-inner { animation: none; }
+    .woty-bottle-btn { transition: none; }
+  }
+</style>
+
+<section class="woty" id="woty" aria-label="Wines of the Year">
+  <header class="woty-head">
+    <p class="woty-guide">Platter&rsquo;s South African Wine Guide 2027</p>
+    <p class="woty-dek">One winning wine for each of the guide&rsquo;s 36 categories, listed in the guide&rsquo;s own order.</p>
+    <p class="woty-taphint">Tap a bottle for more details.</p>
+  </header>
+
+  <nav class="woty-chips" id="woty-chips" aria-label="Wine groups"></nav>
+  <div id="woty-shelves"></div>
+
+  <footer class="woty-foot">
+    <p class="woty-source">Source: Platter&rsquo;s South African Wine Guide 2027.</p>
+    <p class="woty-credit"><strong>Graphic: Mihle Mdashe/News24</strong></p>
+    <p class="woty-note">Bottle photos are producer and retailer product shots.</p>
+  </footer>
+</section>
+
+<script>
+(function () {
+  'use strict';
+
+  var WINES = [
+    { c: "Cabernet Franc", n: "Mirror For The Sun", p: "Hogan Wines", v: "2025", g: "red", img: "images/hogan-mirror-for-the-sun.png" },
+    { c: "Cabernet Sauvignon", n: "Cabernet Sauvignon", p: "Metzer & Holfeld", v: "2025", g: "red", img: "images/metzer-cabernet-sauvignon.png" },
+    { c: "Cinsault Noir", n: "Cinsault Noir", p: "City On A Hill", v: "2025", g: "red", img: "images/city-on-a-hill-cinsault.png" },
+    { c: "Grenache Noir", n: "Grenache Noir", p: "David & Nadia", v: "2025", g: "red", img: "images/david-nadia-grenache-noir.png" },
+    { c: "Merlot", n: "Reserve", p: "Bein Wine", v: "2023", g: "red", img: "images/bein-merlot-reserve.png" },
+    { c: "Petit Verdot", n: "Petit Verdot", p: "Glen Carlou", v: "2021", g: "red", img: "images/glen-carlou-petit-verdot.png" },
+    { c: "Pinotage", n: "Greywacke", p: "Chamonix", v: "2022", g: "red", img: "images/chamonix-greywacke-pinotage.png" },
+    { c: "Pinot Noir", n: "Kogelberg Sandstone PN115", p: "Kershaw", v: "2023", g: "red", img: "images/kershaw-kogelberg-sandstone-pn115.png" },
+    { c: "Shiraz/Syrah", n: "Epilogue", p: "Boschkloof", v: "2024", g: "red", img: "images/boschkloof-epilogue.png" },
+    { c: "Red Blends, Cape Bordeaux", n: "Laur\u00e9at", p: "Zonnebloem", v: "2023", g: "red", img: "images/zonnebloem-laureat.png" },
+    { c: "Red Blends, Other", n: "Nastergal", p: "Thistle & Weed", v: "2024", g: "red", img: "images/thistle-weed-nastergal.png" },
+    { c: "Red Blends, Shiraz/Syrah-Based", n: "Cyril Back", p: "Fairview", v: "2023", g: "red", img: "images/fairview-cyril-back.png" },
+    { c: "Red Blends, With Pinotage", n: "Vitruvian", p: "Beaumont", v: "2022", g: "red", img: "images/beaumont-vitruvian.png" },
+    { c: "Touriga Nacional", n: "Swerwer", p: "JC Wickens", v: "2025", g: "red", img: "images/jc-wickens-swerwer.png" },
+    { c: "Barbera", n: "Prospect", p: "Diemersdal", v: "2024", g: "red", img: "images/diemersdal-prospect-barbera.png" },
+    { c: "Chardonnay", n: "Seascape", p: "Whalehaven", v: "2025", g: "white", img: "images/whalehaven-seascape.png" },
+    { c: "Chenin Blanc", n: "Noa", p: "Rall Wines", v: "2025", g: "white", img: "images/rall-noa.png" },
+    { c: "Cinsault Blanc", n: "The Albatros", p: "ArtiSons", v: "2025", g: "white", img: "images/artisons-albatros.png" },
+    { c: "Colombard", n: "Old Vine Colombar", p: "Rebel Rebel", v: "2024", g: "white", img: "images/rebel-rebel-colombar.png" },
+    { c: "Clairette Blanche", n: "Avon", p: "DaschBosch", v: "2025", g: "white", img: "images/daschbosch-avon.png" },
+    { c: "Grenache Blanc", n: "Grenache Blanc", p: "The Foundry", v: "2023", g: "white", img: "images/the-foundry-grenache-blanc.png" },
+    { c: "Grenache Gris", n: "Grenache Gris", p: "Momento", v: "2025", g: "white", img: "images/momento-grenache-gris.png" },
+    { c: "Muscat d'Alexandrie", n: "There's Something About You", p: "Colombo", v: "2025", g: "white", img: "images/colombo-theres-something-about-you.png" },
+    { c: "Roussanne", n: "Double Door", p: "La Bri", v: "2025", g: "white", img: "images/la-bri-double-door.png" },
+    { c: "Sauvignon Blanc", n: "The Journal", p: "Diemersdal", v: "2025", g: "white", img: "images/diemersdal-the-journal.png" },
+    { c: "Semillon", n: "Limited Release", p: "Andr\u00e9 van Rensburg Wines", v: "2024", g: "white", img: "images/andre-van-rensburg-semillon.png" },
+    { c: "Verdelho", n: "Aasvo\u00ebl", p: "BLANKbottle", v: "2024", g: "white", img: "images/blankbottle-aasvoel.png" },
+    { c: "White Blends, Cape Bordeaux", n: "Tangram", p: "Durbanville Hills", v: "2025", g: "white", img: "images/durbanville-hills-tangram.png" },
+    { c: "White Blends, Other", n: "The Search", p: "Trizanne Signature Wines", v: "2022", g: "white", img: "images/trizanne-the-search.png" },
+    { c: "Cap Classique", n: "Blanc de Blancs", p: "Pieter Ferreira", v: "2021", g: "spark", img: "images/pieter-ferreira-blanc-de-blancs.png" },
+    { c: "Natural Sweet", n: "Vin De Constance", p: "Klein Constantia", v: "2023", g: "sweet", img: "images/klein-constantia-vin-de-constance.png" },
+    { c: "Noble Late Harvest", n: "Riesling", p: "Paul Cl\u00fcver", v: "2026", g: "sweet", img: "images/paul-cluver-riesling-nlh.png" },
+    { c: "Vin de Paille/Straw Wine", n: "Olerasay 6\u00b0", p: "Mullineux", v: "NV", g: "sweet", img: "images/mullineux-olerasay-6.png" },
+    { c: "Dessert Wine, Fortified", n: "Hatchi Hanepoot OVP 1932", p: "The Fledge & Co", v: "2021", g: "sweet", img: "images/fledge-co-hatchi-hanepoot.png" },
+    { c: "Port-Style", n: "Cape Vintage", p: "Delaire Graff", v: "2024", g: "sweet", img: "images/delaire-graff-cape-vintage.png" },
+    { c: "Sherry-Style", n: "PC #19", p: "The Saldanha Wine & Spirit Co", v: "NV", g: "sweet", img: "images/saldanha-pc-19.png" }
+  ];
+
+  var GROUPS = [
+    { id: "red", title: "Red wines" },
+    { id: "white", title: "White wines" },
+    { id: "spark", title: "Cap Classique" },
+    { id: "sweet", title: "Sweet & fortified" }
+  ];
+
+  /* Real bottle photo where one has been sourced; elegant silhouette
+     placeholder for the rest, swapped out as photos are found. */
+  function bottleArt(w) {
+    if (w.img) return '<img class="woty-photo-img" src="' + esc(w.img) + '" alt="Bottle of ' + esc(w.n) + ' by ' + esc(w.p) + '" loading="lazy" decoding="async" draggable="false">';
+    return bottleSVG(w.g);
+  }
+
+  var esc = function (s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  };
+
+  /* Placeholder bottle silhouette. Replace with real photography later:
+     give each wine an "img" field and render an <img> instead. */
+  function bottleSVG(group) {
+    return '<svg class="woty-art g-' + group + '" viewBox="0 0 60 210" aria-hidden="true" focusable="false">'
+      + '<path class="b" d="M23 2h14v10c0 3 2 5 5 7 7 5 10 12 10 20v150c0 9-6 16-15 16H23c-9 0-15-7-15-16V39c0-8 3-15 10-20 3-2 5-4 5-7z"/>'
+      + '<rect class="cap" x="21.5" y="0" width="17" height="13" rx="2"/>'
+      + '<rect class="lbl" x="8.5" y="116" width="43" height="54"/>'
+      + '<rect class="hl" x="13" y="44" width="3.5" height="150" rx="1.75"/>'
+      + '</svg>';
+  }
+
+  var chips = document.getElementById('woty-chips');
+  var shelves = document.getElementById('woty-shelves');
+
+  chips.innerHTML = '<a class="woty-chip" href="#woty">All wines <b>' + WINES.length + '</b></a>';
+
+  GROUPS.forEach(function (group) {
+    var list = WINES.filter(function (w) { return w.g === group.id; });
+    chips.insertAdjacentHTML('beforeend',
+      '<a class="woty-chip" href="#woty-' + group.id + '">' + esc(group.title) + ' <b>' + list.length + '</b></a>');
+
+    var section = document.createElement('section');
+    section.className = 'woty-shelf';
+    section.id = 'woty-' + group.id;
+    section.innerHTML =
+      '<div class="woty-shelf-head">'
+      + '<div><h3 class="woty-shelf-title">' + esc(group.title) + '</h3>'
+      + '<p class="woty-meta">' + list.length + (list.length === 1 ? ' winner' : ' winners') + '</p></div>'
+      + '<p class="woty-hint" aria-hidden="true">Swipe to browse \u2192</p>'
+      + '<div class="woty-controls">'
+      + '<button class="woty-arrow woty-prev" type="button" aria-label="Previous bottles">\u2039</button>'
+      + '<button class="woty-arrow woty-next" type="button" aria-label="Next bottles">\u203a</button>'
+      + '</div></div>'
+      + '<div class="woty-track" tabindex="0" aria-label="' + esc(group.title) + ' shelf"></div>'
+      + '<div class="woty-detail" id="woty-detail-' + group.id + '" hidden>'
+      + '<div class="woty-detail-inner">'
+      + '<div class="woty-dart"></div>'
+      + '<div><p class="woty-dcat"></p><h4 class="woty-dname"></h4>'
+      + '<p class="woty-dprod"></p><p class="woty-dvint"></p>'
+      + '<p class="woty-daward">Wine of the Year \u00b7 Platter\u2019s South African Wine Guide 2027</p></div>'
+      + '<button class="woty-close" type="button" aria-label="Close details">\u00d7</button>'
+      + '</div></div>';
+
+    var track = section.querySelector('.woty-track');
+    var detail = section.querySelector('.woty-detail');
+
+    list.forEach(function (w) {
+      var slot = document.createElement('div');
+      slot.className = 'woty-slot';
+      slot.innerHTML =
+        '<button class="woty-bottle-btn" type="button" aria-expanded="false" aria-controls="woty-detail-' + group.id + '">'
+        + '<span class="woty-glass">' + bottleArt(w) + '</span>'
+        + '<span class="woty-ccat">' + esc(w.c) + '</span>'
+        + '<span class="woty-cname">' + esc(w.n) + '</span>'
+        + '<span class="woty-cprod">' + esc(w.p) + ' \u00b7 ' + esc(w.v) + '</span>'
+        + '</button>';
+      track.appendChild(slot);
+    });
+
+    var prev = section.querySelector('.woty-prev');
+    var next = section.querySelector('.woty-next');
+    var update = function () {
+      var max = Math.max(0, track.scrollWidth - track.clientWidth);
+      prev.disabled = track.scrollLeft <= 3;
+      next.disabled = track.scrollLeft >= max - 3;
+    };
+    var move = function (dir) {
+      track.scrollBy({ left: dir * Math.max(track.clientWidth * .82, 240),
+        behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    };
+    prev.addEventListener('click', function () { move(-1); });
+    next.addEventListener('click', function () { move(1); });
+    track.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update, { passive: true });
+
+    var closeAll = function () {
+      document.querySelectorAll('.woty-detail').forEach(function (d) { d.hidden = true; d.classList.remove('open'); });
+      document.querySelectorAll('.woty-bottle-btn').forEach(function (b) {
+        b.classList.remove('sel'); b.setAttribute('aria-expanded', 'false');
+      });
+    };
+
+    track.addEventListener('click', function (e) {
+      var btn = e.target.closest('.woty-bottle-btn');
+      if (!btn) return;
+      if (btn.getAttribute('aria-expanded') === 'true') { closeAll(); return; }
+      closeAll();
+      var idx = Array.prototype.indexOf.call(track.querySelectorAll('.woty-bottle-btn'), btn);
+      var w = list[idx];
+      detail.querySelector('.woty-dart').innerHTML = bottleArt(w);
+      detail.querySelector('.woty-dcat').textContent = w.c;
+      detail.querySelector('.woty-dname').textContent = w.n;
+      detail.querySelector('.woty-dprod').textContent = w.p;
+      detail.querySelector('.woty-dvint').textContent = 'Vintage ' + w.v;
+      detail.hidden = false;
+      detail.classList.add('open');
+      btn.classList.add('sel');
+      btn.setAttribute('aria-expanded', 'true');
+      try { detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (err) {}
+    });
+
+    detail.querySelector('.woty-close').addEventListener('click', closeAll);
+    shelves.appendChild(section);
+    requestAnimationFrame(update);
+  });
+})();
+</script>
+
+<script>
+/* Iframe auto-height. Posts "woty-height" to the parent page when the
+   component's size changes (a detail card opening, images loading, window
+   resizes). Does nothing when the page is not embedded, so this same file
+   can be pasted straight into a Shorthand Custom HTML section. The
+   matching listener ships in embed-code.html. */
+(function () {
+  if (!window.parent || window.parent === window) return;
+  var root = document.querySelector('.woty');
+  if (!root) return;
+  function post() {
+    var rect = root.getBoundingClientRect();
+    var top = rect.top + (window.scrollY || window.pageYOffset || 0);
+    window.parent.postMessage({ type: 'woty-height', height: Math.ceil(rect.height + top + 8) }, '*');
+  }
+  window.addEventListener('load', post);
+  window.addEventListener('resize', post);
+  if (window.ResizeObserver) new ResizeObserver(post).observe(root);
+  setTimeout(post, 300);
+})();
+</script>
+<!-- WINES OF THE YEAR COMPONENT: END -->
+</body>
+</html>
